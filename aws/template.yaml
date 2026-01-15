@@ -1,0 +1,203 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Snowpark WIDF Lambda Loader - Keyless ETL Demo Demonstrates Snowflake Workload Identity Federation with AWS Lambda. NO
+  secrets, NO passwords, NO key pairs - just IAM trust!
+
+# =============================================================================
+# Parameters
+# =============================================================================
+# NOTE: All values are passed from .env via Taskfile (sam deploy --parameter-overrides)
+# The defaults here are fallbacks only - .env is the source of truth!
+# =============================================================================
+Parameters:
+  Environment:
+    Type: String
+    Description: Deployment environment (from .env ENVIRONMENT)
+
+  SnowflakeAccount:
+    Type: String
+    Description: Snowflake account identifier (from .env SNOWFLAKE_ACCOUNT)
+
+  SnowflakeWarehouse:
+    Type: String
+    Description: Snowflake warehouse (from .env SNOWFLAKE_WAREHOUSE)
+
+  SnowflakeDatabase:
+    Type: String
+    Description: Snowflake database (from .env DEMO_DATABASE)
+
+  SnowflakeSchema:
+    Type: String
+    Description: Snowflake schema (from .env DEMO_SCHEMA)
+
+  SnowflakeRole:
+    Type: String
+    Description: Snowflake role (from .env SA_ROLE)
+
+  SnowflakeUser:
+    Type: String
+    Description: Snowflake WIDF service user (from .env LAMBDA_WID_USER)
+
+# =============================================================================
+# Globals
+# =============================================================================
+Globals:
+  Function:
+    Timeout: 120
+    MemorySize: 512
+    Runtime: python3.11
+    Architectures:
+      - x86_64
+
+# =============================================================================
+# Resources
+# =============================================================================
+Resources:
+  # ---------------------------------------------------------------------------
+  # S3 Bucket for incoming data files
+  # ---------------------------------------------------------------------------
+  IncomingDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "snowpark-widf-loader-${Environment}-${AWS::AccountId}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt SnowparkLoaderFunction.Arn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: incoming/
+                  - Name: suffix
+                    Value: .json
+      Tags:
+        - Key: Project
+          Value: snowpark-widf-demo
+
+  # ---------------------------------------------------------------------------
+  # Lambda Permission for S3 trigger
+  # ---------------------------------------------------------------------------
+  S3InvokeLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref SnowparkLoaderFunction
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+      SourceArn: !Sub "arn:aws:s3:::snowpark-widf-loader-${Environment}-${AWS::AccountId}"
+
+  # ---------------------------------------------------------------------------
+  # IAM Role for Lambda (THIS IS THE WIDF IDENTITY!)
+  # ---------------------------------------------------------------------------
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "snowpark-widf-lambda-role-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CloudWatchLogsPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+        - PolicyName: S3ReadPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:ListBucket
+                Resource:
+                  - !Sub "arn:aws:s3:::snowpark-widf-loader-${Environment}-${AWS::AccountId}"
+                  - !Sub "arn:aws:s3:::snowpark-widf-loader-${Environment}-${AWS::AccountId}/*"
+        - PolicyName: STSPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sts:GetCallerIdentity
+                Resource: "*"
+      Tags:
+        - Key: Project
+          Value: snowpark-widf-demo
+
+  # ---------------------------------------------------------------------------
+  # Lambda Function - Keyless ETL!
+  # ---------------------------------------------------------------------------
+  SnowparkLoaderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "snowpark-widf-loader-${Environment}"
+      Description: Keyless ETL - S3 to Snowflake via WIDF
+      CodeUri: ../
+      Handler: app.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          SNOWFLAKE_ACCOUNT: !Ref SnowflakeAccount
+          SNOWFLAKE_WAREHOUSE: !Ref SnowflakeWarehouse
+          SNOWFLAKE_DATABASE: !Ref SnowflakeDatabase
+          SNOWFLAKE_SCHEMA: !Ref SnowflakeSchema
+          SNOWFLAKE_ROLE: !Ref SnowflakeRole
+          SNOWFLAKE_USER: !Ref SnowflakeUser
+      Tags:
+        Project: snowpark-widf-demo
+
+  # ---------------------------------------------------------------------------
+  # CloudWatch Log Group
+  # ---------------------------------------------------------------------------
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/snowpark-widf-loader-${Environment}"
+      RetentionInDays: 7
+
+# =============================================================================
+# Outputs
+# =============================================================================
+Outputs:
+  LambdaFunctionArn:
+    Description: Lambda function ARN
+    Value: !GetAtt SnowparkLoaderFunction.Arn
+
+  LambdaRoleArn:
+    Description: "🔑 Lambda Role ARN - Use this in Snowflake WIDF setup!"
+    Value: !GetAtt LambdaExecutionRole.Arn
+
+  S3BucketName:
+    Description: S3 bucket for incoming data
+    Value: !Ref IncomingDataBucket
+
+  WIDFSetupSQL:
+    Description: "SQL to run in Snowflake to complete WIDF setup"
+    Value: !Sub |
+      -- 🔑 WIDF Setup: Create service user trusted by this Lambda's IAM role
+      CREATE USER ${SnowflakeUser}
+        TYPE = SERVICE
+        WORKLOAD_IDENTITY = (
+          TYPE = AWS_IAM
+          AWS_ROLE_ARN = '${LambdaExecutionRole.Arn}'
+        )
+        DEFAULT_ROLE = ${SnowflakeRole}
+        DEFAULT_WAREHOUSE = '${SnowflakeWarehouse}';

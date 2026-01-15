@@ -1,0 +1,23 @@
+[
+  {
+    "event_id": "evt_001",
+    "timestamp": "2026-01-15T10:00:00Z",
+    "user_id": "user_123",
+    "action": "page_view",
+    "page": "/dashboard"
+  },
+  {
+    "event_id": "evt_002",
+    "timestamp": "2026-01-15T10:01:15Z",
+    "user_id": "user_456",
+    "action": "button_click",
+    "button": "submit"
+  },
+  {
+    "event_id": "evt_003",
+    "timestamp": "2026-01-15T10:02:30Z",
+    "user_id": "user_123",
+    "action": "purchase",
+    "amount": 99.99
+  }
+]
