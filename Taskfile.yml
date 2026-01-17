@@ -355,12 +355,12 @@ tasks:
           --region $AWS_REGION
 
   aws:logs-recent:
-    desc: Show recent logs (last 30 min)
+    desc: Show recent logs (last 2 min)
     silent: true
     cmds:
       - |
         aws logs tail /aws/lambda/$LAMBDA_FUNCTION_NAME \
-          --since 30m \
+          --since 2m \
           --region $AWS_REGION
 
   # ===========================================================================
