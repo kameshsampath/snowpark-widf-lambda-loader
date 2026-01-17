@@ -43,7 +43,7 @@ sequenceDiagram
 
 ### Snowflake
 
-1. **Snowflake Account** - [Sign up for a free trial](https://signup.snowflake.com/)
+1. **Snowflake Account** - [Sign up for a free trial](https://bit.ly/snow-india-meetups)
 
 2. **Snowflake CLI** - [Install](https://docs.snowflake.com/en/developer-guide/snowflake-cli-v2/installation/installation) and [configure connection](https://docs.snowflake.com/en/developer-guide/snowflake-cli/connecting/connect)
 
