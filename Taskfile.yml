@@ -449,3 +449,84 @@ tasks:
         echo ""
         echo "Lambda authenticates to Snowflake via WIDF"
         echo "No passwords, no secrets, no key pairs"
+
+  # ===========================================================================
+  # Demo Commands (for live demos)
+  # ===========================================================================
+  demo:fail:
+    desc: "Demo Part I: Deploy without WIDF and show auth failure"
+    silent: true
+    cmds:
+      - task: snow:setup
+      - task: aws:deploy
+      - |
+        echo ""
+        echo "============================================"
+        echo "  Demo Part I: Without WIDF"
+        echo "============================================"
+        echo ""
+        echo "Uploading test data to trigger Lambda..."
+      - task: aws:test
+      - |
+        echo ""
+        echo "Waiting 5s for Lambda to execute..."
+        sleep 5
+      - |
+        echo ""
+        echo "Fetching logs (Ctrl+C to stop)..."
+        echo "Expected: Authentication FAILURE"
+        echo ""
+      - task: aws:logs-recent
+
+  demo:success:
+    desc: "Demo Part II: Configure WIDF and show successful auth"
+    silent: true
+    cmds:
+      - task: snow:lambda-wid
+      - |
+        echo ""
+        echo "============================================"
+        echo "  Demo Part II: With WIDF"
+        echo "============================================"
+        echo ""
+        echo "Uploading test data to trigger Lambda..."
+      - task: aws:test
+      - |
+        echo ""
+        echo "Waiting 5s for Lambda to execute..."
+        sleep 5
+      - |
+        echo ""
+        echo "Fetching logs (Ctrl+C to stop)..."
+        echo "Expected: Authentication SUCCESS"
+        echo ""
+      - task: aws:logs-recent
+      - |
+        echo ""
+        echo "Verifying data in Snowflake..."
+      - task: snow:query
+
+  demo:clean:
+    desc: "Demo cleanup: Remove all AWS and Snowflake resources"
+    silent: true
+    cmds:
+      - |
+        echo ""
+        echo "============================================"
+        echo "  Demo Cleanup"
+        echo "============================================"
+        echo ""
+      - task: clean:all
+      - |
+        echo ""
+        echo "============================================"
+        echo "  Demo Complete"
+        echo "============================================"
+        echo ""
+        echo "All resources removed:"
+        echo "  - AWS: Lambda, S3 bucket, IAM role"
+        echo "  - Snowflake: User, role, database"
+        echo ""
+        echo "To run the demo again:"
+        echo "  task demo:fail"
+        echo "  task demo:success"

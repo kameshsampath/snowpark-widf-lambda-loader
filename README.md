@@ -1,8 +1,19 @@
 # 🔐 Snowpark WIDF Lambda Loader
 
-**Keyless ETL: AWS Lambda → Snowflake**
+> Keyless ETL: AWS Lambda → Snowflake
 
 Demonstrates Snowflake [Workload Identity Federation (WIDF)](https://docs.snowflake.com/en/user-guide/workload-identity-federation) with AWS Lambda. No passwords, no secrets, no key pairs - just IAM trust.
+
+## Why WIDF?
+
+| | Traditional | WIDF |
+|---|-------------|------|
+| **Credentials** | Password or key pair stored in Secrets Manager | None - IAM role is the identity |
+| **Rotation** | Manual or automated rotation required | Nothing to rotate |
+| **Leak risk** | Secrets can be exposed in logs, env vars | No secrets to leak |
+| **Audit** | "Which service used this password?" | "IAM role X accessed at time Y" |
+| **Setup** | Create user + password + store secret | Create user + trust IAM ARN |
+| **Cost** | Secrets Manager charges per secret/access | Free |
 
 ## How It Works
 
@@ -71,6 +82,19 @@ task aws:check-sam
 ---
 
 ## 🎬 Demo Walkthrough
+
+### Quick Demo (One Command Each)
+
+```bash
+# Part I: Deploy without WIDF → Watch it fail
+task demo:fail
+
+# Part II: Configure WIDF → Watch it succeed  
+task demo:success
+
+# Cleanup when done
+task demo:clean
+```
 
 ### Part I: Deploy Without WIDF → Watch It Fail ❌
 
@@ -202,35 +226,48 @@ connection_params = {
 
 ---
 
-## 📖 Quick Reference
+## 📖 Commands
+
+### Demo
 
 | Command | Description |
 |---------|-------------|
-| `task default` | Show configuration |
-| `task test` | Run integration tests |
-| `task snow:setup` | Create Snowflake DB/schema/table |
-| `task aws:deploy` | Deploy Lambda + S3 |
-| `task snow:lambda-wid` | Create WIDF service user |
-| `task aws:test` | Upload test data |
-| `task aws:logs` | Tail CloudWatch logs |
-| `task aws:role-arn` | Get Lambda Role ARN |
-| `task deploy` | Full deployment (AWS + WIDF) |
-| `task clean:all` | Cleanup everything |
+| `task demo:fail` | Part I - deploy without WIDF, show failure |
+| `task demo:success` | Part II - configure WIDF, show success |
+| `task demo:clean` | Cleanup all resources |
 
-<details>
-<summary>More commands</summary>
+### Snowflake
+
+| Command | Description |
+|---------|-------------|
+| `task snow:setup` | Create DB/schema/table |
+| `task snow:lambda-wid` | Create WIDF service user |
+| `task snow:query` | Query RAW_DATA table |
+| `task snow:cleanup` | Remove Snowflake resources |
+
+### AWS
 
 | Command | Description |
 |---------|-------------|
 | `task aws:check` | Verify AWS CLI connectivity |
 | `task aws:check-sam` | Check SAM CLI installed |
-| `task aws:setup-sam-bucket` | Create SAM artifact bucket |
+| `task aws:deploy` | Deploy Lambda + S3 |
+| `task aws:test` | Upload test data |
+| `task aws:logs` | Tail CloudWatch logs |
+| `task aws:logs-recent` | Show recent logs (last 30 min) |
+| `task aws:role-arn` | Get Lambda Role ARN |
 | `task aws:debug` | Debug CloudFormation errors |
 | `task aws:clean-stack` | Delete failed stack |
-| `task snow:query` | Query RAW_DATA table |
-| `task snow:cleanup` | Remove Snowflake resources |
+| `task aws:clean` | Remove AWS resources |
 
-</details>
+### Other
+
+| Command | Description |
+|---------|-------------|
+| `task default` | Show configuration |
+| `task test` | Run integration tests |
+| `task deploy` | Full deployment (AWS + WIDF) |
+| `task clean:all` | Cleanup everything |
 
 ---
 
@@ -247,7 +284,7 @@ task aws:deploy
 
 > [!NOTE]
 > **"s3:PutBucketPublicAccessBlock" denied?**  
-> Add `SAM_S3_BUCKET` to `.env` with an existing bucket you can write to.
+> This is typically caused by an organization-level Service Control Policy (SCP) that prevents users from modifying S3 public access settings. Add `SAM_S3_BUCKET` to `.env` with an existing bucket you have write access to.
 
 ### Snowflake WIDF Errors
 
@@ -267,14 +304,21 @@ snow sql -q "SHOW USER WORKLOAD IDENTITY AUTHENTICATION METHODS FOR USER LAMBDA_
 
 ## 🧹 Cleanup
 
+Remove AWS resources only
+
 ```bash
-# Remove AWS resources only
 task aws:clean
+```
 
-# Remove Snowflake resources only
+Remove Snowflake resources only
+
+```bash
 task snow:cleanup
+```
 
-# Clean everything
+Clean everything
+
+```bash
 task clean:all
 ```
 
