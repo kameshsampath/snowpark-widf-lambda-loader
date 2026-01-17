@@ -1,4 +1,4 @@
-# 🔐 Snowpark WIDF Lambda Loader
+# 🔐 Snowpark WIDF Lambda Loader Demo
 
 > Keyless ETL: AWS Lambda → Snowflake
 
