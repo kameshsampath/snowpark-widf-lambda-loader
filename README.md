@@ -41,15 +41,25 @@ sequenceDiagram
 
 ## 📋 Prerequisites
 
+### Snowflake
+
+1. **Snowflake Account** - [Sign up for a free trial](https://signup.snowflake.com/)
+
+2. **Snowflake CLI** - [Install](https://docs.snowflake.com/en/developer-guide/snowflake-cli-v2/installation/installation) and [configure connection](https://docs.snowflake.com/en/developer-guide/snowflake-cli/connecting/connect)
+
+> [!TIP]
+> Use [OAuth for local applications](https://docs.snowflake.com/en/user-guide/oauth-local-applications) for passwordless Snowflake CLI authentication. Set `authenticator = "OAUTH_AUTHORIZATION_CODE"` in your connection config.
+
+### Tools
+
 | Tool | Purpose | Installation |
 |------|---------|--------------|
 | [Docker](https://www.docker.com/products/docker-desktop/) | Container builds | [Install](https://www.docker.com/products/docker-desktop/) |
 | [AWS CLI](https://aws.amazon.com/cli/) | AWS operations | [Install](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) |
 | [AWS SAM CLI](https://aws.amazon.com/serverless/sam/) | Lambda deployment | [Install](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html) |
-| [Snowflake CLI](https://docs.snowflake.com/en/developer-guide/snowflake-cli-v2/index) | SQL scripts | [Install](https://docs.snowflake.com/en/developer-guide/snowflake-cli-v2/installation/installation) |
 | [Task](https://taskfile.dev/) | Task runner | [Install](https://taskfile.dev/installation/) |
 
-**Python environment** (choose one):
+### Python Environment (choose one)
 
 | Option | Tool | Installation |
 |--------|------|--------------|
