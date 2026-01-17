@@ -7,13 +7,52 @@ Demonstrates Snowflake [Workload Identity Federation (WIDF)](https://docs.snowfl
 ## Why WIDF?
 
 | | Traditional | WIDF |
-|---|-------------|------|
+| - | ----------- | ---- |
 | **Credentials** | Password or key pair stored in Secrets Manager | None - IAM role is the identity |
 | **Rotation** | Manual or automated rotation required | Nothing to rotate |
 | **Leak risk** | Secrets can be exposed in logs, env vars | No secrets to leak |
 | **Audit** | "Which service used this password?" | "IAM role X accessed at time Y" |
 | **Setup** | Create user + password + store secret | Create user + trust IAM ARN |
 | **Cost** | Secrets Manager charges per secret/access | Free |
+
+## When to Use This
+
+Snowflake offers multiple ways to load data from S3. Choose based on your needs:
+
+| Approach | Pattern | Best For |
+| -------- | ------- | -------- |
+| [External Stage + Snowpipe](https://docs.snowflake.com/en/user-guide/data-load-s3) | Snowflake **pulls** | Bulk file ingestion, raw landing zones |
+| Lambda + WIDF | You **push** | Smart ingestion with pre-load logic |
+
+**Lambda + WIDF shines when you need:**
+
+- **Data quality gates** - Validate/reject files before loading
+- **Real-time enrichment** - Call APIs during ingestion
+- **Conditional routing** - Route to different tables based on content
+- **Event context** - Capture S3 metadata (who uploaded, when, from where)
+- **Zero credential management** - WIDF handles auth
+
+### Add Dynamic Tables for Instant Analytics
+
+Lambda + WIDF gets data in. [Dynamic Tables](https://docs.snowflake.com/en/user-guide/dynamic-tables-about) turn it into insights - automatically.
+
+```mermaid
+flowchart LR
+    S3[📦 S3] -->|trigger| Lambda[⚡ Lambda + WIDF]
+    Lambda -->|push| RAW[RAW_DATA]
+    RAW -->|auto refresh| DT[DAILY_SUMMARY<br/>Dynamic Table]
+```
+
+The setup script creates `DAILY_SUMMARY` that auto-refreshes as data lands:
+
+| Question | Answer |
+| -------- | ------ |
+| How many files landed today? | `files_loaded` |
+| What's our event volume? | `total_events` by `action` |
+| Daily purchase total? | `total_amount` |
+
+> [!NOTE]
+> External Stage is great for bulk ingestion. Lambda + WIDF + Dynamic Tables delivers smart pipelines with built-in analytics.
 
 ## How It Works
 
@@ -53,7 +92,7 @@ sequenceDiagram
 ### Tools
 
 | Tool | Purpose | Installation |
-|------|---------|--------------|
+| ---- | ------- | ------------ |
 | [Docker](https://www.docker.com/products/docker-desktop/) | Container builds | [Install](https://www.docker.com/products/docker-desktop/) |
 | [AWS CLI](https://aws.amazon.com/cli/) | AWS operations | [Install](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) |
 | [AWS SAM CLI](https://aws.amazon.com/serverless/sam/) | Lambda deployment | [Install](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html) |
@@ -62,7 +101,7 @@ sequenceDiagram
 ### Python Environment (choose one)
 
 | Option | Tool | Installation |
-|--------|------|--------------|
+| ------ | ---- | ------------ |
 | A | [uv](https://docs.astral.sh/uv/) (recommended) | [Install](https://docs.astral.sh/uv/getting-started/installation/) |
 | B | Python venv | Built-in with Python 3.11+ |
 
@@ -161,7 +200,7 @@ task aws:logs
 
 **Expected error:** Snowflake doesn't recognize the Lambda's IAM role yet.
 
-```
+```text
 Connecting to Snowflake using WORKLOAD_IDENTITY
    Account: your_account
    User: LAMBDA_LOADER_BOT
@@ -213,7 +252,11 @@ task aws:logs
 #### 4. Verify Data
 
 ```bash
+# Raw landing data
 task snow:query
+
+# Real-time analytics (Dynamic Table)
+task snow:query-summary
 ```
 
 ---
@@ -231,48 +274,30 @@ connection_params = {
 
 ---
 
-## 📁 Project Structure
-
-```
-├── app.py                 # Lambda handler (Snowpark + WIDF)
-├── Dockerfile             # Container image for Lambda
-├── test_app.py            # Integration tests
-├── Taskfile.yml           # All automation tasks
-├── aws/
-│   └── template.yaml      # SAM template (Lambda, S3, IAM)
-├── scripts/
-│   ├── setup.sql          # Snowflake DB/schema setup
-│   ├── lambda-wid.sql     # WIDF service user creation
-│   └── cleanup.sql        # Remove all Snowflake resources
-└── data/
-    └── sample-data.json   # Test data
-```
-
----
-
 ## 📖 Commands
 
 ### Demo
 
 | Command | Description |
-|---------|-------------|
+| ------- | ----------- |
 | `task demo:fail` | Part I - deploy without WIDF, show failure |
 | `task demo:success` | Part II - configure WIDF, show success |
 | `task demo:clean` | Cleanup all resources |
 
-### Snowflake
+### Snowflake Commands
 
 | Command | Description |
-|---------|-------------|
-| `task snow:setup` | Create DB/schema/table |
+| ------- | ----------- |
+| `task snow:setup` | Create DB/schema/table/dynamic table |
 | `task snow:lambda-wid` | Create WIDF service user |
-| `task snow:query` | Query RAW_DATA table |
+| `task snow:query` | Query RAW_DATA (landing) |
+| `task snow:query-summary` | Query DAILY_SUMMARY (analytics) |
 | `task snow:cleanup` | Remove Snowflake resources |
 
 ### AWS
 
 | Command | Description |
-|---------|-------------|
+| ------- | ----------- |
 | `task aws:check` | Verify AWS CLI connectivity |
 | `task aws:check-sam` | Check SAM CLI installed |
 | `task aws:deploy` | Deploy Lambda + S3 |
@@ -287,7 +312,7 @@ connection_params = {
 ### Other
 
 | Command | Description |
-|---------|-------------|
+| ------- | ----------- |
 | `task default` | Show configuration |
 | `task test` | Run integration tests |
 | `task deploy` | Full deployment (AWS + WIDF) |

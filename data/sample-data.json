@@ -1,23 +1,142 @@
 [
   {
     "event_id": "evt_001",
-    "timestamp": "2026-01-15T10:00:00Z",
-    "user_id": "user_123",
+    "timestamp": "2026-01-17T09:00:00Z",
+    "user_id": "user_101",
     "action": "page_view",
-    "page": "/dashboard"
+    "page": "/home"
   },
   {
     "event_id": "evt_002",
-    "timestamp": "2026-01-15T10:01:15Z",
-    "user_id": "user_456",
-    "action": "button_click",
-    "button": "submit"
+    "timestamp": "2026-01-17T09:01:15Z",
+    "user_id": "user_102",
+    "action": "page_view",
+    "page": "/products"
   },
   {
     "event_id": "evt_003",
-    "timestamp": "2026-01-15T10:02:30Z",
-    "user_id": "user_123",
+    "timestamp": "2026-01-17T09:02:30Z",
+    "user_id": "user_101",
+    "action": "page_view",
+    "page": "/products/laptop"
+  },
+  {
+    "event_id": "evt_004",
+    "timestamp": "2026-01-17T09:03:45Z",
+    "user_id": "user_103",
+    "action": "page_view",
+    "page": "/home"
+  },
+  {
+    "event_id": "evt_005",
+    "timestamp": "2026-01-17T09:05:00Z",
+    "user_id": "user_101",
+    "action": "button_click",
+    "button": "add_to_cart"
+  },
+  {
+    "event_id": "evt_006",
+    "timestamp": "2026-01-17T09:06:00Z",
+    "user_id": "user_102",
+    "action": "button_click",
+    "button": "add_to_cart"
+  },
+  {
+    "event_id": "evt_007",
+    "timestamp": "2026-01-17T09:07:30Z",
+    "user_id": "user_101",
     "action": "purchase",
-    "amount": 99.99
+    "amount": 1299.99
+  },
+  {
+    "event_id": "evt_008",
+    "timestamp": "2026-01-17T09:10:00Z",
+    "user_id": "user_104",
+    "action": "page_view",
+    "page": "/home"
+  },
+  {
+    "event_id": "evt_009",
+    "timestamp": "2026-01-17T09:12:00Z",
+    "user_id": "user_104",
+    "action": "page_view",
+    "page": "/deals"
+  },
+  {
+    "event_id": "evt_010",
+    "timestamp": "2026-01-17T09:15:00Z",
+    "user_id": "user_102",
+    "action": "purchase",
+    "amount": 49.99
+  },
+  {
+    "event_id": "evt_011",
+    "timestamp": "2026-01-17T09:18:00Z",
+    "user_id": "user_105",
+    "action": "page_view",
+    "page": "/home"
+  },
+  {
+    "event_id": "evt_012",
+    "timestamp": "2026-01-17T09:20:00Z",
+    "user_id": "user_105",
+    "action": "button_click",
+    "button": "subscribe"
+  },
+  {
+    "event_id": "evt_013",
+    "timestamp": "2026-01-17T09:22:00Z",
+    "user_id": "user_103",
+    "action": "page_view",
+    "page": "/products/phone"
+  },
+  {
+    "event_id": "evt_014",
+    "timestamp": "2026-01-17T09:25:00Z",
+    "user_id": "user_103",
+    "action": "button_click",
+    "button": "add_to_cart"
+  },
+  {
+    "event_id": "evt_015",
+    "timestamp": "2026-01-17T09:28:00Z",
+    "user_id": "user_103",
+    "action": "purchase",
+    "amount": 899.00
+  },
+  {
+    "event_id": "evt_016",
+    "timestamp": "2026-01-17T09:30:00Z",
+    "user_id": "user_106",
+    "action": "page_view",
+    "page": "/home"
+  },
+  {
+    "event_id": "evt_017",
+    "timestamp": "2026-01-17T09:32:00Z",
+    "user_id": "user_106",
+    "action": "page_view",
+    "page": "/about"
+  },
+  {
+    "event_id": "evt_018",
+    "timestamp": "2026-01-17T09:35:00Z",
+    "user_id": "user_104",
+    "action": "button_click",
+    "button": "contact_us"
+  },
+  {
+    "event_id": "evt_019",
+    "timestamp": "2026-01-17T09:40:00Z",
+    "user_id": "user_107",
+    "action": "page_view",
+    "page": "/products"
+  },
+  {
+    "event_id": "evt_020",
+    "timestamp": "2026-01-17T09:45:00Z",
+    "user_id": "user_107",
+    "action": "purchase",
+    "amount": 199.50
   }
 ]

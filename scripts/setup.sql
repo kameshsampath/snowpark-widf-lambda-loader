@@ -1,6 +1,6 @@
 --jinja
 -- Snowpark WIDF Lambda Loader - Database Setup
--- Creates role, database, schema, and target table
+-- Creates role, database, schema, table, and dynamic table
 
 -- Create Role
 CREATE ROLE IF NOT EXISTS <%sa_role%>
@@ -15,14 +15,18 @@ CREATE DATABASE IF NOT EXISTS <%db_name%>
 
 GRANT OWNERSHIP ON DATABASE <%db_name%> TO ROLE <%sa_role%>;
 
--- Setup Schema
+-- Grant Warehouse Usage (needed for Dynamic Table)
+GRANT USAGE ON WAREHOUSE <%warehouse%> TO ROLE <%sa_role%>;
+
+-- Setup Schema and Tables with SA_ROLE
 USE ROLE <%sa_role%>;
 USE DATABASE <%db_name%>;
+USE WAREHOUSE <%warehouse%>;
 
 CREATE SCHEMA IF NOT EXISTS <%schema_name%>;
 USE SCHEMA <%schema_name%>;
 
--- Create Target Table
+-- Create Target Table (Landing Zone)
 CREATE TABLE IF NOT EXISTS RAW_DATA (
     id              INTEGER AUTOINCREMENT,
     source_file     VARCHAR,
@@ -32,16 +36,25 @@ CREATE TABLE IF NOT EXISTS RAW_DATA (
 )
 COMMENT = 'Raw data loaded via Lambda WIDF';
 
--- Grant Warehouse Usage
-USE ROLE ACCOUNTADMIN;
-GRANT USAGE ON WAREHOUSE <%warehouse%> TO ROLE <%sa_role%>;
+-- Dynamic Table: Real-time analytics on data landing
+-- Auto-refreshes when new data arrives in RAW_DATA
+CREATE OR REPLACE DYNAMIC TABLE DAILY_SUMMARY
+    TARGET_LAG = '1 minute'
+    WAREHOUSE = <%warehouse%>
+AS
+SELECT
+    DATE(loaded_at) AS load_date,
+    COUNT(DISTINCT source_file) AS files_loaded,
+    COUNT(*) AS total_events,
+    payload:action::STRING AS action,
+    COUNT(DISTINCT payload:user_id::STRING) AS unique_users,
+    SUM(payload:amount::FLOAT) AS total_amount
+FROM RAW_DATA
+GROUP BY DATE(loaded_at), payload:action::STRING;
 
 -- Verify Setup
-USE ROLE <%sa_role%>;
-USE DATABASE <%db_name%>;
-USE SCHEMA <%schema_name%>;
-
 SHOW TABLES;
+SHOW DYNAMIC TABLES;
 
 SELECT 
     'Setup complete' AS status,

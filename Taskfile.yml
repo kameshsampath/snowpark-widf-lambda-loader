@@ -76,6 +76,14 @@ tasks:
           --role $SA_ROLE \
           -q "SELECT * FROM $DEMO_DATABASE.$DEMO_SCHEMA.RAW_DATA ORDER BY loaded_at DESC LIMIT 20;"
 
+  snow:query-summary:
+    desc: Query DAILY_SUMMARY Dynamic Table (analytics)
+    cmds:
+      - |
+        snow sql \
+          --role $SA_ROLE \
+          -q "SELECT * FROM $DEMO_DATABASE.$DEMO_SCHEMA.DAILY_SUMMARY ORDER BY load_date DESC;"
+
   snow:cleanup:
     desc: Remove all Snowflake demo resources
     cmds:
